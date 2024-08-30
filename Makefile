@@ -1,10 +1,10 @@
 .SILENT:
 
 run.w: fmt
-	$(GOPATH)/bin/wgo -verbose go run . save
+	$(GOPATH)/bin/wgo -verbose go run ./cmd/harvest save
 
 run: fmt
-	go run . save
+	go run ./cmd/harvest save
 
 update: fmt
 	go get -u ./...
