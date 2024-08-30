@@ -3,6 +3,7 @@ package save
 import (
 	"encoding/base64"
 	"flag"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -20,13 +21,17 @@ var (
 )
 
 func Save(args []string) {
-	log.Printf("Save")
-
 	saveFlags := flag.NewFlagSet("save", flag.ExitOnError)
 	saveFlags.StringVar(&outputLoc, "output", "./", "location to save files to")
 	saveFlags.StringVar(&includeFilter, "include", "", "only include URLs containing this substring")
 	saveFlags.StringVar(&mimeType, "type", "", "only include matching MIME types")
 	saveFlags.Parse(args)
+
+	if len(saveFlags.Args()) == 0 {
+		saveFlags.Usage()
+		fmt.Fprintf(os.Stderr, "\n%s save [options] <file> <file> …\n\n", filepath.Base(os.Args[0]))
+		os.Exit(1)
+	}
 
 	os.MkdirAll(outputLoc, os.ModePerm)
 
