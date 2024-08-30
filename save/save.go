@@ -21,6 +21,8 @@ func Save(args []string) {
 	saveFlags.StringVar(&outputLoc, "output", "./", "location to save files to")
 	saveFlags.Parse(args)
 
+	os.MkdirAll(outputLoc, os.ModePerm)
+
 	for _, fileName := range saveFlags.Args() {
 		har, err := harvest.Parse(fileName)
 		if err != nil {
