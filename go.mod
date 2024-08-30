@@ -1,3 +1,3 @@
 module go.chimbori.app/harvest
 
-go 1.22
+go 1.22.1
