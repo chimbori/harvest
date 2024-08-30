@@ -1,10 +1,10 @@
 .SILENT:
 
 run.w: fmt
-	$(GOPATH)/bin/wgo -verbose go run ./cmd/harvest save --output=/tmp
+	$(GOPATH)/bin/wgo -verbose go run ./cmd/harvest save --output=/tmp --include=images/full --type=image/jpeg
 
 run: fmt
-	go run ./cmd/harvest save --output=/tmp
+	go run ./cmd/harvest save --output=/tmp --include=images/full --type=image/jpeg
 
 update: fmt
 	go get -u ./...

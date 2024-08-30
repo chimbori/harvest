@@ -16,6 +16,7 @@ import (
 var (
 	outputLoc     string
 	includeFilter string
+	mimeType      string
 )
 
 func Save(args []string) {
@@ -24,6 +25,7 @@ func Save(args []string) {
 	saveFlags := flag.NewFlagSet("save", flag.ExitOnError)
 	saveFlags.StringVar(&outputLoc, "output", "./", "location to save files to")
 	saveFlags.StringVar(&includeFilter, "include", "", "only include URLs containing this substring")
+	saveFlags.StringVar(&mimeType, "type", "", "only include matching MIME types")
 	saveFlags.Parse(args)
 
 	os.MkdirAll(outputLoc, os.ModePerm)
@@ -40,6 +42,11 @@ func Save(args []string) {
 			// log.Println(entry.Response.Content.Text)
 
 			if includeFilter != "" && !strings.Contains(entry.Request.URL, includeFilter) {
+				log.Println("Skipping ", entry.Request.URL)
+				continue
+			}
+
+			if mimeType != "" && !strings.Contains(entry.Response.Content.MimeType, mimeType) {
 				log.Println("Skipping ", entry.Request.URL)
 				continue
 			}
