@@ -1,4 +1,4 @@
-package save
+package main
 
 import (
 	"encoding/base64"
@@ -11,20 +11,20 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-
-	"go.chimbori.app/harvest"
 )
 
 var (
 	includeFilter string
 	mimeType      string
 	renumber      bool
+	minBytes      int
 )
 
 func Save(args []string) {
 	saveFlags := flag.NewFlagSet("save", flag.ExitOnError)
 	saveFlags.StringVar(&includeFilter, "include", "", "only include URLs containing this substring")
 	saveFlags.StringVar(&mimeType, "type", "", "only include matching MIME types")
+	saveFlags.IntVar(&minBytes, "minbytes", 0, "only include files greater than this")
 	saveFlags.BoolVar(&renumber, "renumber", true, "true to renumber; false to keep original filenames")
 	saveFlags.Parse(args)
 
@@ -49,7 +49,7 @@ func Save(args []string) {
 
 	numberSuffix := 1
 	for _, fileName := range saveFlags.Args() {
-		har, err := harvest.Parse(fileName)
+		har, err := Parse(fileName)
 		if err != nil {
 			log.Println(err)
 		}
@@ -70,6 +70,11 @@ func Save(args []string) {
 				content, _ = base64.StdEncoding.DecodeString(entry.Response.Content.Text)
 			} else {
 				content = []byte(entry.Response.Content.Text)
+			}
+
+			if len(content) < minBytes {
+				log.Println("Skipping", entry.Request.URL)
+				continue
 			}
 
 			fileName, err := getFileName(filePrefix, entry.Request.URL, numberSuffix)
