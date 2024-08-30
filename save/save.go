@@ -8,17 +8,22 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"go.chimbori.app/harvest"
 )
 
-var outputLoc string
+var (
+	outputLoc     string
+	includeFilter string
+)
 
 func Save(args []string) {
 	log.Printf("Save")
 
 	saveFlags := flag.NewFlagSet("save", flag.ExitOnError)
 	saveFlags.StringVar(&outputLoc, "output", "./", "location to save files to")
+	saveFlags.StringVar(&includeFilter, "include", "", "only include URLs containing this substring")
 	saveFlags.Parse(args)
 
 	os.MkdirAll(outputLoc, os.ModePerm)
@@ -33,6 +38,11 @@ func Save(args []string) {
 			// log.Println(entry.Response.Content.MimeType)
 			// log.Println(entry.Request.URL)
 			// log.Println(entry.Response.Content.Text)
+
+			if includeFilter != "" && !strings.Contains(entry.Request.URL, includeFilter) {
+				log.Println("Skipping ", entry.Request.URL)
+				continue
+			}
 
 			var content []byte
 			if entry.Response.Content.Encoding == "base64" {
