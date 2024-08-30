@@ -2,18 +2,26 @@ package save
 
 import (
 	"encoding/base64"
+	"flag"
 	"log"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 
 	"go.chimbori.app/harvest"
 )
 
+var outputLoc string
+
 func Save(args []string) {
 	log.Printf("Save")
 
-	for _, fileName := range args {
+	saveFlags := flag.NewFlagSet("save", flag.ExitOnError)
+	saveFlags.StringVar(&outputLoc, "output", "./", "location to save files to")
+	saveFlags.Parse(args)
+
+	for _, fileName := range saveFlags.Args() {
 		har, err := harvest.Parse(fileName)
 		if err != nil {
 			log.Println(err)
@@ -35,9 +43,10 @@ func Save(args []string) {
 			if err != nil {
 				log.Println(err)
 			}
+			fileName = filepath.Join(outputLoc, fileName)
 
 			log.Println(entry.Request.URL, " --> ", fileName)
-			err = os.WriteFile("tmp-"+fileName, content, 0o644)
+			err = os.WriteFile(fileName, content, 0o644)
 			if err != nil {
 				log.Println(err)
 			}
