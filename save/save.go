@@ -15,14 +15,12 @@ import (
 )
 
 var (
-	outputLoc     string
 	includeFilter string
 	mimeType      string
 )
 
 func Save(args []string) {
 	saveFlags := flag.NewFlagSet("save", flag.ExitOnError)
-	saveFlags.StringVar(&outputLoc, "output", "./", "location to save files to")
 	saveFlags.StringVar(&includeFilter, "include", "", "only include URLs containing this substring")
 	saveFlags.StringVar(&mimeType, "type", "", "only include matching MIME types")
 	saveFlags.Parse(args)
@@ -33,6 +31,12 @@ func Save(args []string) {
 		os.Exit(1)
 	}
 
+	firstFileName, err := filepath.Abs(saveFlags.Args()[0])
+	if err != nil {
+		log.Println(err)
+	}
+
+	outputLoc := strings.TrimSuffix(firstFileName, filepath.Ext(firstFileName))
 	os.MkdirAll(outputLoc, os.ModePerm)
 
 	for _, fileName := range saveFlags.Args() {
