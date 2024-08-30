@@ -37,17 +37,13 @@ func Save(args []string) {
 		}
 
 		for _, entry := range har.Log.Entries {
-			// log.Println(entry.Response.Content.MimeType)
-			// log.Println(entry.Request.URL)
-			// log.Println(entry.Response.Content.Text)
-
 			if includeFilter != "" && !strings.Contains(entry.Request.URL, includeFilter) {
-				log.Println("Skipping ", entry.Request.URL)
+				log.Println("Skipping", entry.Request.URL)
 				continue
 			}
 
 			if mimeType != "" && !strings.Contains(entry.Response.Content.MimeType, mimeType) {
-				log.Println("Skipping ", entry.Request.URL)
+				log.Println("Skipping", entry.Request.URL)
 				continue
 			}
 
