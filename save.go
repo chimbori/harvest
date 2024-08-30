@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"mime"
 	"net/url"
 	"os"
 	"path"
@@ -77,7 +78,7 @@ func Save(args []string) {
 				continue
 			}
 
-			fileName, err := getFileName(filePrefix, entry.Request.URL, numberSuffix)
+			fileName, err := getFileName(filePrefix, entry.Request.URL, entry.Response.Content.MimeType, numberSuffix)
 			if err != nil {
 				panic(err)
 			}
@@ -94,7 +95,7 @@ func Save(args []string) {
 	}
 }
 
-func getFileName(filePrefix string, fileUrl string, numberSuffix int) (fileName string, err error) {
+func getFileName(filePrefix string, fileUrl string, mimeType string, numberSuffix int) (fileName string, err error) {
 	u, err := url.Parse(fileUrl)
 	if err != nil {
 		panic(err)
@@ -103,7 +104,12 @@ func getFileName(filePrefix string, fileUrl string, numberSuffix int) (fileName 
 	if renumber {
 		ext := path.Ext(u.Path)
 		if ext == "" {
-			ext = ".html"
+			exts, err := mime.ExtensionsByType(mimeType)
+			if err == nil && len(exts) > 0 {
+				ext = exts[0]
+			} else {
+				ext = ".html"
+			}
 		}
 		return fmt.Sprintf("%s %d%s", filePrefix, numberSuffix, ext), nil
 	} else {
