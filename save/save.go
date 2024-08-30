@@ -2,6 +2,7 @@ package save
 
 import (
 	"encoding/base64"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -17,12 +18,14 @@ import (
 var (
 	includeFilter string
 	mimeType      string
+	renumber      bool
 )
 
 func Save(args []string) {
 	saveFlags := flag.NewFlagSet("save", flag.ExitOnError)
 	saveFlags.StringVar(&includeFilter, "include", "", "only include URLs containing this substring")
 	saveFlags.StringVar(&mimeType, "type", "", "only include matching MIME types")
+	saveFlags.BoolVar(&renumber, "renumber", true, "true to renumber; false to keep original filenames")
 	saveFlags.Parse(args)
 
 	if len(saveFlags.Args()) == 0 {
@@ -31,14 +34,20 @@ func Save(args []string) {
 		os.Exit(1)
 	}
 
-	firstFileName, err := filepath.Abs(saveFlags.Args()[0])
+	firstFilePath, err := filepath.Abs(saveFlags.Args()[0])
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
+	}
+	if _, err := os.Stat(firstFilePath); errors.Is(err, os.ErrNotExist) {
+		log.Fatal(err)
 	}
 
-	outputLoc := strings.TrimSuffix(firstFileName, filepath.Ext(firstFileName))
+	outputLoc := strings.TrimSuffix(firstFilePath, filepath.Ext(firstFilePath))
+	filePrefix := filepath.Base(outputLoc)
+
 	os.MkdirAll(outputLoc, os.ModePerm)
 
+	numberSuffix := 1
 	for _, fileName := range saveFlags.Args() {
 		har, err := harvest.Parse(fileName)
 		if err != nil {
@@ -63,9 +72,9 @@ func Save(args []string) {
 				content = []byte(entry.Response.Content.Text)
 			}
 
-			fileName, err := getFileName(entry.Request.URL)
+			fileName, err := getFileName(filePrefix, entry.Request.URL, numberSuffix)
 			if err != nil {
-				log.Println(err)
+				panic(err)
 			}
 			fileName = filepath.Join(outputLoc, fileName)
 
@@ -74,15 +83,25 @@ func Save(args []string) {
 			if err != nil {
 				log.Println(err)
 			}
+
+			numberSuffix++
 		}
 	}
 }
 
-func getFileName(s string) (fileName string, err error) {
-	u, err := url.Parse(s)
+func getFileName(filePrefix string, fileUrl string, numberSuffix int) (fileName string, err error) {
+	u, err := url.Parse(fileUrl)
 	if err != nil {
 		panic(err)
 	}
-	fileName = path.Base(u.Path)
-	return
+
+	if renumber {
+		ext := path.Ext(u.Path)
+		if ext == "" {
+			ext = ".html"
+		}
+		return fmt.Sprintf("%s %d%s", filePrefix, numberSuffix, ext), nil
+	} else {
+		return path.Base(u.Path), nil
+	}
 }
